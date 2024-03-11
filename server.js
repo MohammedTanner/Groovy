@@ -10,13 +10,14 @@ const cookieParser = require("cookie-parser");
 // Connecting the Database
 connectDB();
 
-app.use(express.json())
+app.use(express.json());
 app.use(cookieParser());
-app.get("/admin", adminAuth, (req, res) => res.send("admin Route"));
-app.get("/basic", userAuth, (req, res) => res.send("User Route"));
-app.get('/', (req, res) => {
-    res.send('Hello, world!');
-});
+app.set("view engine", "ejs");
+app.get("/admin", adminAuth, (req, res) => res.render("admin"));
+app.get("/basic", userAuth, (req, res) => res.render("user"));
+app.get('/', (req, res) => res.render("home"));
+app.get("/login", (req, res) => res.render("login"))
+app.get("/register", (req, res) => res.render("register"))
 
 const server = app.listen(PORT, () => console.log(`Server is running on port ${PORT}`))
 process.on("unhandledRejection", err => {
