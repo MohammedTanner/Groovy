@@ -1,5 +1,7 @@
 const User = require("../model/User")
 const bcrypt = require("bcryptjs")
+const jwt = require('jsonwebtoken')
+const jwtSecret = "0d70c93345480686f6a693904dc7b1b89cf4592b19fc74040a9b8dfea131cf87b158fd"
 
 exports.register = async (req, res, next) => {
     const { username, password } = req.body
@@ -8,12 +10,23 @@ exports.register = async (req, res, next) => {
     }
     try {
         const hash = await bcrypt.hash(password, 10);
-        const user = await User.create({ username, password: hash });
-        res.status(200).json({ message: "User successfully created", user });
+        const user = await User.create({ username, password: hash }).then((user) => {
+            const maxAge = 3 * 60 * 60;
+            const token = jwt.sign(
+                { id: user._id, username, role: user.role },
+                jwtSecret,
+                { expiresIn: maxAge, }
+            )
+            res.cookie("jwt", token, {
+                httpOnly: true,
+                maxAge: maxAge * 1000,
+            });
+        });
+        res.status(201).json({ message: "User successfully created", user });
     } catch (error) {
         res.status(400).json({ message: "User not successfully created", error: error.message });
     }
-    }
+}
 
 
 exports.login = async (req, res, next) => {
@@ -24,16 +37,32 @@ exports.login = async (req, res, next) => {
         })
     }
     try {
-        const user = await User.findOne({ username, password })
+        const user = await User.findOne({ username })
         if (!user) {
-            res.status(401).json({
+            res.status(400).json({
                 message: "Login not successful",
-                error: "User not found", 
+                error: "User not found",
             })
         } else {
-            res.status(200).json({
-                message: "Login successful",
-                user,
+            // compare given password with hashed password
+            bcrypt.compare(password, user.password).then(function (result) {
+                if (result) {
+                    const maxAge = 3 * 60 * 60;
+                    const token = jwt.sign(
+                        { id: user._id, username, role: user.role },
+                        jwtSecret,
+                        {
+                            expiresIn: maxAge,
+                        }
+                    );
+                    res.cookie("jwt", token, {
+                        httpOnly: true,
+                        maxAge: maxAge * 1000, 
+                    });
+                    res.status(201).json({ message: "Login successful", user: user._id, })
+                } else {
+                    res.status(400).json({ message: "Login not successful" });
+                }
             })
         }
     } catch (error) {
