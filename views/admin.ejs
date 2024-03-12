@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin page</title>
+</head>
+<body>
+  <div class="display" style="background-color: red;"></div>
+  <h1>Users</h1>
+  <ul class="userList"></ul>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const userList = document.querySelector(".userList");
+      const display = document.querySelector(".display");
+
+      try {
+        const res = await fetch("/api/auth/getUsers");
+        const data = await res.json();
+
+        data.user.forEach(mappedUser => {
+            console.log(mappedUser.username);
+          if (mappedUser.username !== "admin") {
+            const li = document.createElement("li");
+
+            const usernameHeader = document.createElement("b");
+            usernameHeader.textContent = "Username: ";
+            li.appendChild(usernameHeader);
+
+            const usernameText = document.createTextNode(mappedUser.username);
+            li.appendChild(usernameText);
+
+            const lineBreak = document.createElement("br");
+            li.appendChild(lineBreak);
+
+            const roleHeader = document.createElement("b");
+            roleHeader.textContent = "Role: ";
+            li.appendChild(roleHeader);
+
+            const roleText = document.createTextNode(mappedUser.role);
+            li.appendChild(roleText);
+
+            const editButton = document.createElement("button");
+            editButton.className = "edit";
+            editButton.textContent = "Edit Role";
+            li.appendChild(editButton);
+
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "delete";
+            deleteButton.textContent = "Delete User";
+            li.appendChild(deleteButton);
+
+            userList.appendChild(li);
+            document.body.appendChild(userList);
+
+            editButton.addEventListener('click', async () => {
+              display.textContent = '';
+              const id = mappedUser.id; // Assuming the user object has an "id" property
+              const res = await fetch('/api/auth/update', {
+                method: 'PUT',
+                body: JSON.stringify({ role: 'admin', id }),
+                headers: { 'Content-Type': 'application/json' }
+              });
+              const dataUpdate = await res.json();
+              if (res.status === 400 || res.status === 401) {
+                document.documentElement.scrollTop = 0;
+                return display.textContent = `${dataUpdate.message}. ${dataUpdate.error ? dataUpdate.error : ''}`;
+              }
+              location.assign('/admin');
+            });
+
+            deleteButton.addEventListener('click', async () => {
+              // Handle delete functionality here
+              console.log('Delete button clicked');
+            });
+          }
+        });
+      } catch (error) {
+        console.error("An error occurred: ", error);
+      }
+    });
+  </script>
+</body>
+</html>

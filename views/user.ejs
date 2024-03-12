@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User page</title>
+  </head>
+  <body>
+    <h1>Users</h1>
+    <ul id=userList></ul>
+    <script>
+        const userList = document.getElementByID("userList");
+
+        const getUsers = async () => {
+            try{
+                const res = await fetch("api/auth/getUsers").then(res => res.json());
+                const data = await res.user;
+
+                data.forEach(mappedUser => {
+                    if (mappedUser.username !== "admin") {
+                        const li = document.createElement("li");
+
+                        const usernameHeader = document.createElement("b");
+                        usernameHeader.textContent = "Username: ";
+                        li.appendChild(usernameHeader);
+
+                        const usernameText = document.createTextNode(mappedUser.username);
+                        li.appendChild(usernameText);
+
+                        const lineBreak = document.createElement("br");
+                        li.appendChild(lineBreak);
+
+                        const roleHeader = document.createElement("b");
+                        roleHeader.textContent = "Role: ";
+                        li.appendChild(roleHeader);
+
+                        const roleText = document.createTextNode(mappedUser.role);
+                        li.appendChild(roleText);
+
+                        userList.appendChild(li);
+                    }
+                });
+            } catch (error) {
+                console.error("An error occurred: ", error);
+            }
+        }
+
+        getUsers();
+    </script>
+  </body>
+</html>
