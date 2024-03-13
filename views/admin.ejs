@@ -10,6 +10,8 @@
   <div class="display" style="background-color: red;"></div>
   <h1>Users</h1>
   <ul class="userList"></ul>
+  <u1></u1>
+  <button class="logout"><a href="/logout">Log Out</a></button>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const userList = document.querySelector(".userList");
@@ -20,7 +22,7 @@
         const data = await res.json();
 
         data.user.forEach(mappedUser => {
-            console.log(mappedUser.username);
+            console.log(mappedUser);
           if (mappedUser.username !== "admin") {
             const li = document.createElement("li");
 
@@ -54,12 +56,13 @@
             userList.appendChild(li);
             document.body.appendChild(userList);
 
-            editButton.addEventListener('click', async () => {
+            editButton.addEventListener('click', async (event) => {
               display.textContent = '';
               const id = mappedUser.id; // Assuming the user object has an "id" property
+              console.log(id);
               const res = await fetch('/api/auth/update', {
                 method: 'PUT',
-                body: JSON.stringify({ role: 'admin', id }),
+                body: JSON.stringify({ role: 'admin', id: id }),
                 headers: { 'Content-Type': 'application/json' }
               });
               const dataUpdate = await res.json();
@@ -73,6 +76,19 @@
             deleteButton.addEventListener('click', async () => {
               // Handle delete functionality here
               console.log('Delete button clicked');
+              const id = mappedUser.id;
+              display.textContent = '';
+              const res = await fetch('api/auth/deleteUser', {
+                method: 'DELETE',
+                body: JSON.stringify({ id: mappedUser.id }), 
+                headers: { 'Content-Type': 'application/json' }
+              });
+              const dataUpdate = await res.json();
+              if(res.status == 400 || res.status === 401) {
+                document.documentElement.scrollTop = 0;
+                return display.textContent = `${dataUpdate.message}. ${dataUpdate.error ? dataUpdate.error : ''}`;
+              }
+              location.assign('/admin');
             });
           }
         });

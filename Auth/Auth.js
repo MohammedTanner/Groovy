@@ -78,24 +78,21 @@ exports.update = async (req, res, next) => {
 
     try {
         // First - Verifying if role and id are present
-        if (role && id) {
+        if (id) {
             // Second - Verifying if the value of role is admin
-            if (role === "admin") {
-                // Finds the user with the id
-                const user = await User.findById(id);
+            const user = await User.findById(id);
 
-                // Third - Verifies the user is not an admin
-                if (user.role !== "admin") {
-                    user.role = role;
+            // Third - Verifies the user is not an admin
+                if (user.role === "basic") {
+                    user.role = "admin";
                     await user.save();
                     res.status(201).json({ message: "Update successful", user });
                 } else {
-                    res.status(400).json({ message: "User is already an Admin" });
+                    user.role = "basic";
+                    await user.save();
+                    res.status(201).json({ message: "Update successful", user });
                 }
             } else {
-                res.status(400).json({ message: "Role is not admin" });
-            }
-        } else {
             res.status(400).json({ message: "Role or ID not present" });
         }
     } catch (error) {
@@ -122,6 +119,7 @@ exports.getUsers = async (req, res, next) => {
             const container = {}
             container.username = user.username
             container.role = user.role
+            container.id = user.id
             return container
         })
         res.status(200).json({ user: userFunction })
